@@ -3,13 +3,13 @@ import enum
 from sqlalchemy import Enum, Integer, String, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base
+from .base import Base, TimestampMixin
 
 class RoleEnum(str, enum.Enum):
     ADMIN = "admin"
     USER = "user"
     
-class User(Base):
+class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
