@@ -1,12 +1,19 @@
-from passlib.context import CryptContext
+from typing import Annotated
 from datetime import datetime, timedelta
+
+from fastapi.security import OAuth2PasswordBearer
+from passlib.context import CryptContext
 from jose import jwt
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, status
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.models.user import User
+from app.db.session import get_db
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 def hash_password(password: str) -> str:
@@ -49,3 +56,36 @@ def verify_refresh_token(token: str) -> dict:
         raise HTTPException(401, "Invalid refresh token")
 
     return payload
+
+
+def get_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User:
+    payload = verify_access_token(token)
+
+    username = payload.get("username")
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
+    user = db.query(User).filter_by(username=username).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    return user
+
+
+def get_admin(user: Annotated[User, Depends(get_user)]) -> User:
+    if user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return user

@@ -29,6 +29,16 @@ class UserRegistration(BaseModel):
         if self.password != self.confirm_password:
             raise ValueError("Passwords do not match")
         return self
+    
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    role: RoleEnum
+    first_name: str
+    last_name: str | None
+    email: EmailStr
+    password_hash: str
 
 
 class UserLogin(BaseModel):
@@ -40,3 +50,6 @@ class UserLoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+class RefreshRequest(BaseModel):
+    refresh_token: str

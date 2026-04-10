@@ -6,6 +6,8 @@ from app.models import User
 from app.core.security import (
     generate_token,
     generate_refresh_token,
+    verify_access_token,
+    verify_refresh_token,
     hash_password,
     verify_password,
 )
@@ -49,12 +51,29 @@ class UserService:
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
             )
 
-        token_data = {"sub": user.id, "username": user.username}
+        token_data = {"sub": f"{user.id}", "username": user.username}
 
         access_token = generate_token(token_data)
         refresh_token = generate_refresh_token(token_data)
 
         return UserLoginResponse(access_token=access_token, refresh_token=refresh_token)
+    
+    def refresh_access_token(self, refresh_token: str) -> UserLoginResponse:
+
+        payload = verify_refresh_token(refresh_token)
+
+        user_id = payload.get("sub")
+
+        user = self.get_user_by_id(user_id)
+    
+        if not self.get_user_by_id(user_id):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+            )
+
+        new_access_token = generate_token({"sub": f"{user.id}", "username": user.username})
+
+        return UserLoginResponse(access_token=new_access_token, refresh_token=refresh_token)
 
     def get_user_by_username(self, username: str) -> User | None:
         return self.db.query(User).filter(User.username == username).first()
