@@ -19,7 +19,7 @@ class UserRegistration(BaseModel):
 
     @field_validator("email", "username", "first_name", "last_name")
     @classmethod
-    def validate_unique_fields(cls, v):
+    def validate_fields(cls, v):
         if not v or not v.strip():
             raise ValueError("Field cannot be empty")
         return v.strip()
@@ -53,3 +53,26 @@ class UserLoginResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class UserUpdate(BaseModel):
+    username: str | None = Field(default=None, max_length=50)
+    first_name: str | None = Field(default=None, max_length=20)
+    last_name: str | None = Field(default=None, max_length=50)
+    email: EmailStr | None = Field(default=None, max_length=100)
+    password: str | None = Field(default=None, min_length=8, max_length=128)
+    confirm_password: str | None = Field(default=None, min_length=8, max_length=128)
+
+    @field_validator("email", "username", "first_name", "last_name")
+    @classmethod
+    def validate_fields(cls, v):
+        if v is not None and not v.strip():
+            raise ValueError("Field cannot be empty")
+        return v.strip() if v is not None else v
+    
+    @model_validator(mode="after")
+    def validate_passwords_match(self):
+        if self.password is not None or self.confirm_password is not None:
+            if self.password != self.confirm_password:
+                raise ValueError("Passwords do not match")
+        return self

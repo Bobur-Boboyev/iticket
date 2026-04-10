@@ -11,7 +11,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.schemas.user import UserRegistration, UserLoginResponse, UserLogin
+from app.schemas.user import UserRegistration, UserLoginResponse, UserLogin, UserUpdate
 
 
 class UserService:
@@ -74,6 +74,52 @@ class UserService:
         new_access_token = generate_token({"sub": f"{user.id}", "username": user.username})
 
         return UserLoginResponse(access_token=new_access_token, refresh_token=refresh_token)
+    
+    def get_current_user(self, user_id: int, current_user: User) -> User:
+        if current_user.id != user_id and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized to access this resource")
+
+        user = self.get_user_by_id(user_id)
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return user
+    
+    def update_user(self, user_id: int, user_data: UserUpdate, current_user: User) -> User:
+        if current_user.id != user_id and current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Not authorized to update this user")
+
+        if not self.get_user_by_id(user_id):
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if user_data.username and self.get_user_by_username(user_data.username) and self.get_user_by_username(user_data.username).id != user_id:
+            raise HTTPException(status_code=400, detail="Username already exists")
+        
+        if user_data.email and self.get_user_by_email(user_data.email) and self.get_user_by_email(user_data.email).id != user_id:
+            raise HTTPException(status_code=400, detail="Email already exists")
+        
+        user = self.get_user_by_id(user_id)
+
+        if user_data.password:
+            hashed_password = hash_password(user_data.password)
+            user.password_hash = hashed_password
+        if user_data.username:
+            user.username = user_data.username
+        if user_data.first_name:
+            user.first_name = user_data.first_name
+        if user_data.last_name:
+            user.last_name = user_data.last_name
+        if user_data.email:
+            user.email = user_data.email
+
+        self.db.commit()
+        self.db.refresh(user)
+        
+        return user
+
+    def get_all_users(self) -> list[User]:
+        return self.db.query(User).all()
 
     def get_user_by_username(self, username: str) -> User | None:
         return self.db.query(User).filter(User.username == username).first()
