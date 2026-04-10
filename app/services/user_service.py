@@ -57,7 +57,7 @@ class UserService:
         refresh_token = generate_refresh_token(token_data)
 
         return UserLoginResponse(access_token=access_token, refresh_token=refresh_token)
-    
+
     def refresh_access_token(self, refresh_token: str) -> UserLoginResponse:
 
         payload = verify_refresh_token(refresh_token)
@@ -65,19 +65,25 @@ class UserService:
         user_id = payload.get("sub")
 
         user = self.get_user_by_id(user_id)
-    
+
         if not self.get_user_by_id(user_id):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
 
-        new_access_token = generate_token({"sub": f"{user.id}", "username": user.username})
+        new_access_token = generate_token(
+            {"sub": f"{user.id}", "username": user.username}
+        )
 
-        return UserLoginResponse(access_token=new_access_token, refresh_token=refresh_token)
-    
+        return UserLoginResponse(
+            access_token=new_access_token, refresh_token=refresh_token
+        )
+
     def get_current_user(self, user_id: int, current_user: User) -> User:
         if current_user.id != user_id and current_user.role != "admin":
-            raise HTTPException(status_code=403, detail="Not authorized to access this resource")
+            raise HTTPException(
+                status_code=403, detail="Not authorized to access this resource"
+            )
 
         user = self.get_user_by_id(user_id)
 
@@ -85,20 +91,32 @@ class UserService:
             raise HTTPException(status_code=404, detail="User not found")
 
         return user
-    
-    def update_user(self, user_id: int, user_data: UserUpdate, current_user: User) -> User:
+
+    def update_user(
+        self, user_id: int, user_data: UserUpdate, current_user: User
+    ) -> User:
         if current_user.id != user_id and current_user.role != "admin":
-            raise HTTPException(status_code=403, detail="Not authorized to update this user")
+            raise HTTPException(
+                status_code=403, detail="Not authorized to update this user"
+            )
 
         if not self.get_user_by_id(user_id):
             raise HTTPException(status_code=404, detail="User not found")
-        
-        if user_data.username and self.get_user_by_username(user_data.username) and self.get_user_by_username(user_data.username).id != user_id:
+
+        if (
+            user_data.username
+            and self.get_user_by_username(user_data.username)
+            and self.get_user_by_username(user_data.username).id != user_id
+        ):
             raise HTTPException(status_code=400, detail="Username already exists")
-        
-        if user_data.email and self.get_user_by_email(user_data.email) and self.get_user_by_email(user_data.email).id != user_id:
+
+        if (
+            user_data.email
+            and self.get_user_by_email(user_data.email)
+            and self.get_user_by_email(user_data.email).id != user_id
+        ):
             raise HTTPException(status_code=400, detail="Email already exists")
-        
+
         user = self.get_user_by_id(user_id)
 
         if user_data.password:
@@ -115,7 +133,7 @@ class UserService:
 
         self.db.commit()
         self.db.refresh(user)
-        
+
         return user
 
     def get_all_users(self) -> list[User]:

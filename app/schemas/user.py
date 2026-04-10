@@ -29,7 +29,7 @@ class UserRegistration(BaseModel):
         if self.password != self.confirm_password:
             raise ValueError("Passwords do not match")
         return self
-    
+
 
 class UserResponse(BaseModel):
     id: int
@@ -51,6 +51,7 @@ class UserLoginResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
 
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 
@@ -69,7 +70,7 @@ class UserUpdate(BaseModel):
         if v is not None and not v.strip():
             raise ValueError("Field cannot be empty")
         return v.strip() if v is not None else v
-    
+
     @model_validator(mode="after")
     def validate_passwords_match(self):
         if self.password is not None or self.confirm_password is not None:

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
 
+
 class TIcketTypeEnum(str, enum.Enum):
     STANDART = "standard"
     VIP = "vip"
@@ -22,4 +23,3 @@ class TicketType(Base, TimestampMixin):
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"))
 
     event: Mapped["Event"] = relationship(back_populates="ticket_types")
-    tickets: Mapped[list["Ticket"]] = relationship(back_populates="ticket_type")

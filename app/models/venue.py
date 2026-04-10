@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
 
+
 class Venue(Base, TimestampMixin):
     __tablename__ = "venues"
 

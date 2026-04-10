@@ -16,7 +16,9 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[UserResponse])
-async def users_view(admin: Annotated[User, Depends(get_admin)], db: Annotated[User, Depends(get_db)]):
+async def users_view(
+    admin: Annotated[User, Depends(get_admin)], db: Annotated[User, Depends(get_db)]
+):
     user_service = UserService(db)
     users = user_service.get_all_users()
 
@@ -24,15 +26,23 @@ async def users_view(admin: Annotated[User, Depends(get_admin)], db: Annotated[U
 
 
 @router.get("/{id}", response_model=UserResponse)
-async def get_user_view(id: Annotated[int, Path()], user: Annotated[User, Depends(get_user)], db: Annotated[User, Depends(get_db)]):
+async def get_user_view(
+    id: Annotated[int, Path()],
+    user: Annotated[User, Depends(get_user)],
+    db: Annotated[User, Depends(get_db)],
+):
     user_service = UserService(db)
     user = user_service.get_current_user(id, user)
     return user
 
 
-
 @router.patch("/{id}", response_model=UserResponse)
-async def update_user_view(id: Annotated[int, Path()], data: Annotated[UserUpdate, Body()], user: Annotated[User, Depends(get_user)], db: Annotated[User, Depends(get_db)]):
+async def update_user_view(
+    id: Annotated[int, Path()],
+    data: Annotated[UserUpdate, Body()],
+    user: Annotated[User, Depends(get_user)],
+    db: Annotated[User, Depends(get_db)],
+):
     user_service = UserService(db)
     updated_user = user_service.update_user(id, data, user)
 
